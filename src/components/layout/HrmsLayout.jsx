@@ -1,36 +1,48 @@
 import React, { useState, useEffect } from 'react';
 import { Outlet, useNavigate, useLocation } from 'react-router-dom';
+import { motion, AnimatePresence } from 'framer-motion';
 import {
   Menu,
   X,
   Search,
   ChevronDown,
   ChevronRight,
-  Globe,
   LogOut,
   ArrowLeft,
   UserCheck,
   Save,
   Maximize,
-  RefreshCw
+  RefreshCw,
+  Clock,
+  Sparkles,
+  Command,
+  Volume2,
+  VolumeX,
+  Layers,
+  FileCheck,
+  Laptop,
+  CheckSquare,
+  ShieldCheck,
+  Plus
 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
+import { CommandPaletteModal } from '../common/CommandPaletteModal';
+import { sound } from '../../utils/soundEffects';
 
-// Only Onboarding Menu
 export const HRMS_MENU_ITEMS = [
   {
     id: 'onboarding',
-    title: 'Onboarding',
+    title: 'Onboarding Galaxy',
     icon: UserCheck,
     isPrimary: true,
-    badge: 'Work Area',
+    badge: 'Active Hub',
     path: '/hrms/onboarding',
     subItems: [
-      { id: 'candidate-pipeline', title: 'Candidate Pipeline', path: '/hrms/onboarding' },
-      { id: 'new-hire-registration', title: 'New Hire Registration', path: '/hrms/onboarding' },
-      { id: 'document-verification', title: 'Document Verification', path: '/hrms/onboarding' },
-      { id: 'asset-allocation', title: 'Asset Allocation', path: '/hrms/onboarding' },
-      { id: 'induction-checklist', title: 'Induction Checklist', path: '/hrms/onboarding' },
+      { id: 'all-pipeline', title: '5-Stage Kanban Board', path: '/hrms/onboarding' },
+      { id: 'candidate-pipeline', title: 'Candidate Pipeline', path: '/hrms/module/candidate-pipeline' },
+      { id: 'document-verification', title: 'Document Verification', path: '/hrms/module/document-verification' },
+      { id: 'asset-allocation', title: 'Asset Allocation Matrix', path: '/hrms/module/asset-allocation' },
+      { id: 'induction-checklist', title: 'Induction & Clearance', path: '/hrms/module/induction-checklist' },
     ]
   }
 ];
@@ -40,642 +52,390 @@ export const HrmsLayout = () => {
   const navigate = useNavigate();
   const location = useLocation();
 
-  const [sidebarOpen, setSidebarOpen] = useState(true);
+  const [isMobile, setIsMobile] = useState(() => (typeof window !== 'undefined' ? window.innerWidth < 1024 : false));
+  const [sidebarOpen, setSidebarOpen] = useState(() => (typeof window !== 'undefined' ? window.innerWidth >= 1024 : true));
   const [searchQuery, setSearchQuery] = useState('');
   const [expandedMenu, setExpandedMenu] = useState({ onboarding: true });
-  const [selectedUnit, setSelectedUnit] = useState('Unit-2');
+  const [selectedUnit, setSelectedUnit] = useState('Universe Unit-02');
   const [timeStr, setTimeStr] = useState('');
   const [isSavedNotice, setIsSavedNotice] = useState(false);
-  const [isFullscreen, setIsFullscreen] = useState(false);
+  const [isCommandOpen, setIsCommandOpen] = useState(false);
+  const [isMuted, setIsMuted] = useState(sound.isMuted());
 
-  // Live Digital Clock
+  useEffect(() => {
+    const handleResize = () => {
+      const mobile = window.innerWidth < 1024;
+      setIsMobile(mobile);
+      if (mobile) setSidebarOpen(false);
+      else setSidebarOpen(true);
+    };
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
+
   useEffect(() => {
     const updateTime = () => {
       const now = new Date();
-      const formatted = now.toLocaleTimeString('en-US', {
-        hour: 'numeric',
-        minute: '2-digit',
-        hour12: true,
-      });
-      setTimeStr(formatted);
+      setTimeStr(
+        now.toLocaleTimeString('en-US', {
+          hour: '2-digit',
+          minute: '2-digit',
+          second: '2-digit',
+          hour12: true
+        })
+      );
     };
-
     updateTime();
     const interval = setInterval(updateTime, 1000);
     return () => clearInterval(interval);
   }, []);
 
-  // Sync expanded menu with current route
-  useEffect(() => {
-    HRMS_MENU_ITEMS.forEach(item => {
-      if (location.pathname.includes(item.id) || (item.id === 'onboarding' && location.pathname === '/hrms')) {
-        setExpandedMenu(prev => ({ ...prev, [item.id]: true }));
-      }
-    });
-  }, [location.pathname]);
-
   const toggleMenu = (menuId) => {
-    setExpandedMenu(prev => ({
+    sound.playClick();
+    setExpandedMenu((prev) => ({
       ...prev,
       [menuId]: !prev[menuId]
     }));
   };
 
+  const handleNavClick = (path) => {
+    sound.playClick();
+    navigate(path);
+    if (isMobile) setSidebarOpen(false);
+  };
+
   const handleLogout = () => {
+    sound.playClick();
     logout();
     navigate('/login');
   };
 
+  const toggleAudio = () => {
+    const muted = sound.toggleMute();
+    setIsMuted(muted);
+    if (!muted) sound.playClick();
+  };
+
   const handleFullscreenToggle = () => {
+    sound.playClick();
     if (!document.fullscreenElement) {
       document.documentElement.requestFullscreen().catch(() => {});
-      setIsFullscreen(true);
     } else {
       document.exitFullscreen().catch(() => {});
-      setIsFullscreen(false);
     }
   };
 
   const handleSaveState = () => {
+    sound.playSuccess();
     setIsSavedNotice(true);
-    setTimeout(() => setIsSavedNotice(false), 2000);
+    setTimeout(() => setIsSavedNotice(false), 2200);
   };
 
   const handleReload = () => {
+    sound.playClick();
     window.location.reload();
   };
 
-  // Filter menu items by search query
-  const filteredMenuItems = HRMS_MENU_ITEMS.filter(item => {
+  const filteredMenuItems = HRMS_MENU_ITEMS.filter((item) => {
     if (!searchQuery) return true;
     const query = searchQuery.toLowerCase();
     const matchesTitle = item.title.toLowerCase().includes(query);
-    const matchesSub = item.subItems?.some(sub => sub.title.toLowerCase().includes(query));
+    const matchesSub = item.subItems?.some((sub) => sub.title.toLowerCase().includes(query));
     return matchesTitle || matchesSub;
   });
 
   return (
-    <div style={{
-      minHeight: '100vh',
-      width: '100vw',
-      backgroundColor: '#f8fafc',
-      fontFamily: 'Inter, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
-      display: 'flex',
-      flexDirection: 'column',
-      overflowX: 'hidden'
-    }}>
+    <div className="min-h-screen w-full bg-[#080a0f] text-slate-100 flex flex-col font-sans select-none overflow-x-hidden">
+      {/* Global Command Omnibar Modal */}
+      <CommandPaletteModal isOpen={isCommandOpen} onClose={setIsCommandOpen} />
+
       {/* TOP NAVBAR HEADER */}
-      <header style={{
-        height: '64px',
-        backgroundColor: '#ffffff',
-        borderBottom: '1px solid #e2e8f0',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'space-between',
-        padding: '0 20px',
-        position: 'sticky',
-        top: 0,
-        zIndex: 50,
-        boxShadow: '0 1px 4px rgba(0,0,0,0.04)'
-      }}>
-        {/* Left: Hamburger & Clean HRMS Brand Badge */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
-          {/* Hamburger Toggle */}
+      <header className="sticky top-0 z-40 bg-[#0c1017]/90 backdrop-blur-2xl border-b border-white/10 px-4 md:px-6 py-2.5 flex items-center justify-between shadow-2xl">
+        {/* Left: Sidebar Toggle & Brand Badge */}
+        <div className="flex items-center gap-3">
           <button
-            onClick={() => setSidebarOpen(!sidebarOpen)}
-            style={{
-              padding: '6px 8px',
-              backgroundColor: '#f8fafc',
-              border: '1px solid #e2e8f0',
-              borderRadius: '8px',
-              cursor: 'pointer',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              color: '#334155',
-              transition: 'all 0.15s ease'
-            }}
-            title="Toggle Sidebar Menu"
+            onClick={() => { sound.playClick(); setSidebarOpen(!sidebarOpen); }}
+            className="p-2 rounded-xl bg-white/5 border border-white/10 hover:bg-white/10 text-slate-300 hover:text-white transition-all cursor-pointer"
+            title="Toggle Menu Panel"
           >
-            <Menu style={{ width: '20px', height: '20px' }} />
+            <Menu className="w-5 h-5" />
           </button>
 
-          {/* Clean Portal Badge */}
           <div
-            onClick={() => navigate('/hrms/onboarding')}
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: '10px',
-              padding: '6px 14px',
-              border: '1.5px solid #8C4A32',
-              borderRadius: '10px',
-              backgroundColor: 'rgba(140, 74, 50, 0.05)',
-              cursor: 'pointer'
-            }}
+            onClick={() => handleNavClick('/hrms/onboarding')}
+            className="flex items-center gap-2.5 px-3.5 py-1.5 rounded-xl bg-[#8C4A32]/20 border border-[#8C4A32]/50 hover:bg-[#8C4A32]/30 transition-all cursor-pointer shadow-sm group"
           >
-            <span style={{
-              fontSize: '15px',
-              fontWeight: '800',
-              color: '#8C4A32',
-              letterSpacing: '-0.2px'
-            }}>
-              Primus Partners
+            <span className="font-display font-extrabold text-[#fed7aa] text-sm tracking-tight group-hover:text-white">
+              PRIMUS PARTNERS
             </span>
-            <span style={{
-              fontSize: '10px',
-              fontWeight: '700',
-              backgroundColor: '#8C4A32',
-              color: '#ffffff',
-              padding: '2px 6px',
-              borderRadius: '6px',
-              letterSpacing: '0.4px'
-            }}>
-              HRMS
+            <span className="text-[10px] font-mono font-bold bg-[#8C4A32] text-white px-2 py-0.5 rounded-md shadow">
+              TALENT HORIZON
             </span>
           </div>
         </div>
 
-        {/* Center: Clean Spacer */}
-        <div style={{ flex: 1 }} />
+        {/* Center: Command Palette Trigger */}
+        <div className="hidden md:flex items-center">
+          <button
+            onClick={() => { sound.playClick(); setIsCommandOpen(true); }}
+            className="flex items-center gap-2.5 px-3.5 py-1.5 rounded-xl bg-white/5 border border-white/10 hover:border-[#f97316]/50 hover:bg-white/10 text-slate-300 text-xs font-mono transition-all cursor-pointer w-64 justify-between"
+          >
+            <div className="flex items-center gap-2">
+              <Search className="w-3.5 h-3.5 text-[#f97316]" />
+              <span>Omnibar Search...</span>
+            </div>
+            <kbd className="px-1.5 py-0.5 bg-white/10 rounded border border-white/10 text-[10px] text-slate-400">
+              ⌘K
+            </kbd>
+          </button>
+        </div>
 
-        {/* Right: Time, Unit Dropdown, Profile, Actions */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
+        {/* Right: Actions, Clock, User & Navigation */}
+        <div className="flex items-center gap-2 sm:gap-3">
           {/* Live Clock */}
-          <div style={{
-            fontSize: '13px',
-            fontWeight: '700',
-            color: '#334155',
-            padding: '4px 10px',
-            backgroundColor: '#f1f5f9',
-            borderRadius: '6px',
-            letterSpacing: '0.2px'
-          }}>
-            {timeStr || '8:30 PM'}
+          <div className="hidden lg:flex items-center gap-1.5 px-3 py-1 rounded-xl bg-black/40 border border-white/10 text-xs font-mono text-slate-300">
+            <Clock className="w-3.5 h-3.5 text-[#f97316]" />
+            <span>{timeStr || '12:00:00 AM'}</span>
           </div>
 
-          {/* Unit Dropdown Selector */}
-          <div style={{ position: 'relative' }}>
-            <select
-              value={selectedUnit}
-              onChange={(e) => setSelectedUnit(e.target.value)}
-              style={{
-                appearance: 'none',
-                backgroundColor: '#ffffff',
-                border: '1.5px solid #8C4A32',
-                borderRadius: '20px',
-                padding: '6px 30px 6px 14px',
-                fontSize: '12px',
-                fontWeight: '700',
-                color: '#8C4A32',
-                cursor: 'pointer',
-                outline: 'none'
-              }}
-            >
-              <option value="Unit-1">Unit-1</option>
-              <option value="Unit-2">Unit-2</option>
-              <option value="Unit-3">Unit-3</option>
-              <option value="Unit-4">Unit-4</option>
-              <option value="HQ-Central">HQ Central</option>
-            </select>
-            <ChevronDown style={{
-              position: 'absolute',
-              right: '10px',
-              top: '50%',
-              transform: 'translateY(-50%)',
-              width: '14px',
-              height: '14px',
-              color: '#8C4A32',
-              pointerEvents: 'none'
-            }} />
-          </div>
-
-          {/* Globe / Language Icon */}
-          <button
-            style={{
-              width: '32px',
-              height: '32px',
-              borderRadius: '50%',
-              backgroundColor: '#f8fafc',
-              border: '1px solid #e2e8f0',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              color: '#64748b',
-              cursor: 'pointer'
-            }}
-            title="Switch Language / Region"
+          {/* Unit Selector */}
+          <select
+            value={selectedUnit}
+            onChange={(e) => { sound.playClick(); setSelectedUnit(e.target.value); }}
+            className="bg-black/50 border border-white/15 text-xs font-mono text-[#fed7aa] font-bold py-1.5 px-2.5 rounded-xl outline-none cursor-pointer hover:border-[#f97316]"
           >
-            <Globe style={{ width: '16px', height: '16px' }} />
+            <option value="Universe Unit-01">Unit-01 (HQ)</option>
+            <option value="Universe Unit-02">Unit-02 (APAC)</option>
+            <option value="Universe Unit-03">Unit-03 (EMEA)</option>
+          </select>
+
+          {/* Sound Synthesizer Toggle */}
+          <button
+            onClick={toggleAudio}
+            onMouseEnter={() => sound.playHover()}
+            className="p-2 rounded-xl bg-white/5 border border-white/10 hover:bg-white/10 text-slate-300 hover:text-white transition-all cursor-pointer"
+            title={isMuted ? 'Unmute Sound' : 'Mute Sound'}
+          >
+            {isMuted ? <VolumeX className="w-4 h-4 text-slate-400" /> : <Volume2 className="w-4 h-4 text-[#f97316]" />}
           </button>
 
-          {/* User Profile Badge */}
-          <div style={{
-            display: 'flex',
-            alignItems: 'center',
-            gap: '8px',
-            backgroundColor: '#ffffff',
-            padding: '3px 10px',
-            borderRadius: '20px',
-            border: '1px solid #e2e8f0'
-          }}>
-            <div style={{
-              width: '28px',
-              height: '28px',
-              borderRadius: '50%',
-              backgroundColor: '#8C4A32',
-              color: '#ffffff',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              fontSize: '12px',
-              fontWeight: '700'
-            }}>
-              {user?.username ? user.username.charAt(0).toUpperCase() : 'A'}
-            </div>
-            <div style={{ textAlign: 'left' }}>
-              <div style={{ fontSize: '12px', fontWeight: '700', color: '#1e293b', lineHeight: '1' }}>
-                {user?.name || user?.username || 'Admin User'}
-              </div>
-            </div>
-          </div>
-
-          {/* Back to Portal / Main Dashboard */}
+          {/* Return to Command Center Hub */}
           <button
-            onClick={() => navigate('/dashboard')}
-            style={{
-              padding: '6px 12px',
-              backgroundColor: '#f8fafc',
-              border: '1px solid #cbd5e1',
-              borderRadius: '8px',
-              fontSize: '12px',
-              fontWeight: '600',
-              color: '#475569',
-              cursor: 'pointer',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '4px',
-              transition: 'all 0.15s ease'
-            }}
-            title="Return to Main Portal Dashboard"
+            onClick={() => { sound.playClick(); navigate('/dashboard'); }}
+            onMouseEnter={() => sound.playHover()}
+            className="px-3 py-1.5 rounded-xl bg-white/5 border border-white/10 hover:bg-white/10 text-slate-300 hover:text-white text-xs font-mono font-bold flex items-center gap-1.5 transition-all cursor-pointer"
+            title="Universe Command Center"
           >
-            <ArrowLeft style={{ width: '13px', height: '13px' }} />
-            Main Portal
+            <ArrowLeft className="w-3.5 h-3.5 text-[#f97316]" />
+            <span className="hidden sm:inline">Universe Hub</span>
           </button>
+
+          {/* User Profile */}
+          <div className="flex items-center gap-2 px-2.5 py-1 rounded-xl bg-white/5 border border-white/10">
+            <div className="w-6 h-6 rounded-lg bg-[#8C4A32] flex items-center justify-center text-xs font-bold text-white">
+              {user?.userId ? user.userId.charAt(0).toUpperCase() : 'A'}
+            </div>
+            <span className="text-xs font-bold text-white hidden xl:inline font-display">
+              {user?.name || user?.userId || 'Admin'}
+            </span>
+          </div>
 
           {/* Logout Button */}
           <button
             onClick={handleLogout}
-            style={{
-              padding: '6px 14px',
-              fontSize: '12px',
-              fontWeight: '600',
-              color: '#e11d48',
-              backgroundColor: '#ffffff',
-              border: '1.5px solid #e11d48',
-              borderRadius: '8px',
-              cursor: 'pointer',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '6px',
-              transition: 'all 0.15s ease'
-            }}
+            onMouseEnter={() => sound.playHover()}
+            className="p-2 rounded-xl bg-rose-500/15 border border-rose-500/30 hover:bg-rose-500/25 text-rose-300 transition-all cursor-pointer"
+            title="Sign Out"
           >
-            <LogOut style={{ width: '13px', height: '13px' }} />
-            Logout
+            <LogOut className="w-4 h-4" />
           </button>
         </div>
       </header>
 
-      {/* BODY LAYOUT: SIDEBAR + MAIN CONTENT */}
-      <div style={{ display: 'flex', flex: 1, position: 'relative' }}>
+      {/* BODY LAYOUT: SIDEBAR + OUTLET */}
+      <div className="flex flex-1 relative w-full overflow-hidden">
+        {/* Mobile Backdrop */}
+        {isMobile && sidebarOpen && (
+          <div
+            onClick={() => setSidebarOpen(false)}
+            className="fixed inset-0 bg-black/70 backdrop-blur-sm z-30 lg:hidden"
+          />
+        )}
+
         {/* SIDEBAR NAVIGATION */}
-        <aside style={{
-          width: sidebarOpen ? '260px' : '0px',
-          minWidth: sidebarOpen ? '260px' : '0px',
-          backgroundColor: '#ffffff',
-          borderRight: sidebarOpen ? '1px solid #e2e8f0' : 'none',
-          transition: 'all 0.25s cubic-bezier(0.4, 0, 0.2, 1)',
-          overflow: 'hidden',
-          display: 'flex',
-          flexDirection: 'column',
-          zIndex: 40,
-          boxShadow: '1px 0 3px rgba(0,0,0,0.02)'
-        }}>
-          <div style={{ width: '260px', padding: '16px 12px', boxSizing: 'border-box', height: '100%', overflowY: 'auto' }}>
-            {/* Search menu... Input */}
-            <div style={{
-              position: 'relative',
-              marginBottom: '16px'
-            }}>
-              <input
-                type="text"
-                placeholder="Search menu..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                style={{
-                  width: '100%',
-                  padding: '9px 12px 9px 34px',
-                  backgroundColor: '#f8fafc',
-                  border: '1px solid #e2e8f0',
-                  borderRadius: '10px',
-                  fontSize: '13px',
-                  color: '#1e293b',
-                  outline: 'none',
-                  boxSizing: 'border-box',
-                  transition: 'border-color 0.15s ease'
-                }}
-                onFocus={(e) => { e.target.style.borderColor = '#8C4A32'; }}
-                onBlur={(e) => { e.target.style.borderColor = '#e2e8f0'; }}
-              />
-              <Search style={{
-                position: 'absolute',
-                left: '10px',
-                top: '50%',
-                transform: 'translateY(-50%)',
-                width: '15px',
-                height: '15px',
-                color: '#94a3b8'
-              }} />
-              {searchQuery && (
-                <button
-                  onClick={() => setSearchQuery('')}
-                  style={{
-                    position: 'absolute',
-                    right: '10px',
-                    top: '50%',
-                    transform: 'translateY(-50%)',
-                    background: 'none',
-                    border: 'none',
-                    cursor: 'pointer',
-                    color: '#94a3b8',
-                    padding: 0
-                  }}
-                >
-                  <X style={{ width: '14px', height: '14px' }} />
-                </button>
+        <aside
+          className={`
+            ${isMobile ? 'fixed inset-y-0 left-0 z-40 w-72' : 'relative'}
+            ${sidebarOpen ? (isMobile ? 'translate-x-0' : 'w-72') : (isMobile ? '-translate-x-full' : 'w-0')}
+            bg-[#0a0d14]/95 backdrop-blur-2xl border-r border-white/10 transition-all duration-300 ease-in-out overflow-hidden flex flex-col shrink-0
+          `}
+        >
+          <div className="w-72 p-4 h-full overflow-y-auto flex flex-col justify-between">
+            <div>
+              {/* Sidebar Header on Mobile */}
+              {isMobile && (
+                <div className="flex items-center justify-between pb-3 mb-4 border-b border-white/10">
+                  <div className="text-sm font-bold font-display text-[#fed7aa] flex items-center gap-2">
+                    <Sparkles className="w-4 h-4 text-[#f97316]" /> HRMS Navigation
+                  </div>
+                  <button
+                    onClick={() => setSidebarOpen(false)}
+                    className="p-1 rounded-lg text-slate-400 hover:text-white"
+                  >
+                    <X className="w-5 h-5" />
+                  </button>
+                </div>
               )}
+
+              {/* Search Menu Input */}
+              <div className="relative mb-5">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500" />
+                <input
+                  type="text"
+                  placeholder="Filter HRMS routes..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="w-full bg-[#080a0f] border border-white/10 focus:border-[#f97316] rounded-xl py-2 pl-9 pr-8 text-xs font-mono text-white placeholder-slate-500 outline-none transition-colors"
+                />
+                {searchQuery && (
+                  <button
+                    onClick={() => setSearchQuery('')}
+                    className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-500 hover:text-white"
+                  >
+                    <X className="w-3.5 h-3.5" />
+                  </button>
+                )}
+              </div>
+
+              {/* Menu Categories */}
+              <nav className="space-y-1.5">
+                {filteredMenuItems.map((item) => {
+                  const Icon = item.icon;
+                  const isExpanded = expandedMenu[item.id];
+                  const isActive = location.pathname.startsWith('/hrms');
+
+                  return (
+                    <div key={item.id} className="space-y-1">
+                      {/* Main Group Header */}
+                      <div
+                        onClick={() => toggleMenu(item.id)}
+                        className={`flex items-center justify-between p-3 rounded-2xl cursor-pointer transition-all ${
+                          isActive
+                            ? 'bg-[#8C4A32]/25 border border-[#8C4A32]/50 text-white shadow-md'
+                            : 'bg-white/[0.02] border border-transparent hover:bg-white/[0.05] text-slate-300'
+                        }`}
+                      >
+                        <div className="flex items-center gap-3">
+                          <div className={`w-8 h-8 rounded-xl flex items-center justify-center ${isActive ? 'bg-[#8C4A32] text-white' : 'bg-white/5 text-slate-400'}`}>
+                            <Icon className="w-4 h-4" />
+                          </div>
+                          <div>
+                            <span className="text-xs font-bold font-display block leading-tight">
+                              {item.title}
+                            </span>
+                            <span className="text-[10px] font-mono text-[#f97316]">
+                              {item.badge}
+                            </span>
+                          </div>
+                        </div>
+
+                        {isExpanded ? (
+                          <ChevronDown className="w-4 h-4 text-slate-400" />
+                        ) : (
+                          <ChevronRight className="w-4 h-4 text-slate-400" />
+                        )}
+                      </div>
+
+                      {/* Sub-menu Route Items */}
+                      {isExpanded && item.subItems && (
+                        <div className="ml-4 pl-3 border-l border-white/10 space-y-1 pt-1">
+                          {item.subItems.map((sub) => {
+                            const isSubActive = location.pathname === sub.path;
+                            return (
+                              <div
+                                key={sub.id}
+                                onClick={() => handleNavClick(sub.path)}
+                                onMouseEnter={() => sound.playHover()}
+                                className={`p-2 rounded-xl text-xs font-mono cursor-pointer transition-all flex items-center justify-between ${
+                                  isSubActive
+                                    ? 'bg-[#8C4A32]/30 border border-[#f97316]/60 text-white font-bold shadow-sm'
+                                    : 'text-slate-400 hover:text-white hover:bg-white/5'
+                                }`}
+                              >
+                                <span>{sub.title}</span>
+                                {isSubActive && <span className="w-1.5 h-1.5 rounded-full bg-[#f97316] animate-pulse" />}
+                              </div>
+                            );
+                          })}
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
+              </nav>
             </div>
 
-            {/* Menu List - Only Onboarding */}
-            <nav style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
-              {filteredMenuItems.map((item) => {
-                const IconComponent = item.icon;
-                const isExpanded = expandedMenu[item.id];
-                const isActive = location.pathname.startsWith(item.path.split('?')[0]);
-                const isPrimary = item.isPrimary;
-
-                return (
-                  <div key={item.id} style={{ marginBottom: '2px' }}>
-                    {/* Menu Item Button */}
-                    <div
-                      onClick={() => {
-                        toggleMenu(item.id);
-                        if (item.path) {
-                          navigate(item.path);
-                        }
-                      }}
-                      style={{
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'space-between',
-                        padding: '10px 12px',
-                        borderRadius: '10px',
-                        cursor: 'pointer',
-                        backgroundColor: isActive
-                          ? (isPrimary ? 'rgba(140, 74, 50, 0.08)' : '#f1f5f9')
-                          : 'transparent',
-                        color: isActive
-                          ? (isPrimary ? '#8C4A32' : '#0f172a')
-                          : '#475569',
-                        fontWeight: isActive ? '700' : '600',
-                        fontSize: '13.5px',
-                        transition: 'all 0.15s ease',
-                        border: isPrimary && isActive ? '1px solid rgba(140, 74, 50, 0.2)' : '1px solid transparent'
-                      }}
-                      onMouseEnter={(e) => {
-                        if (!isActive) e.currentTarget.style.backgroundColor = '#f8fafc';
-                      }}
-                      onMouseLeave={(e) => {
-                        if (!isActive) e.currentTarget.style.backgroundColor = 'transparent';
-                      }}
-                    >
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                        <IconComponent style={{
-                          width: '18px',
-                          height: '18px',
-                          color: isActive
-                            ? (isPrimary ? '#8C4A32' : '#334155')
-                            : '#64748b'
-                        }} />
-                        <span>{item.title}</span>
-                      </div>
-
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                        {item.badge && (
-                          <span style={{
-                            fontSize: '10px',
-                            fontWeight: '700',
-                            backgroundColor: '#8C4A32',
-                            color: '#ffffff',
-                            padding: '2px 6px',
-                            borderRadius: '12px',
-                            letterSpacing: '0.2px'
-                          }}>
-                            {item.badge}
-                          </span>
-                        )}
-                        {item.subItems && (
-                          isExpanded ? (
-                            <ChevronDown style={{ width: '15px', height: '15px', color: '#94a3b8' }} />
-                          ) : (
-                            <ChevronRight style={{ width: '15px', height: '15px', color: '#94a3b8' }} />
-                          )
-                        )}
-                      </div>
-                    </div>
-
-                    {/* Submenu Items */}
-                    {item.subItems && isExpanded && (
-                      <div style={{
-                        marginLeft: '26px',
-                        paddingLeft: '10px',
-                        borderLeft: '2px solid #e2e8f0',
-                        marginTop: '4px',
-                        display: 'flex',
-                        flexDirection: 'column',
-                        gap: '2px'
-                      }}>
-                        {item.subItems.map(sub => {
-                          const isSubActive = location.pathname === sub.path;
-                          return (
-                            <div
-                              key={sub.id}
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                navigate(sub.path);
-                              }}
-                              style={{
-                                padding: '7px 10px',
-                                borderRadius: '6px',
-                                fontSize: '12.5px',
-                                color: isSubActive ? '#8C4A32' : '#64748b',
-                                fontWeight: isSubActive ? '700' : '500',
-                                backgroundColor: isSubActive ? 'rgba(140, 74, 50, 0.08)' : 'transparent',
-                                cursor: 'pointer',
-                                transition: 'all 0.12s ease'
-                              }}
-                              onMouseEnter={(e) => {
-                                if (!isSubActive) {
-                                  e.currentTarget.style.color = '#1e293b';
-                                  e.currentTarget.style.backgroundColor = '#f8fafc';
-                                }
-                              }}
-                              onMouseLeave={(e) => {
-                                if (!isSubActive) {
-                                  e.currentTarget.style.color = '#64748b';
-                                  e.currentTarget.style.backgroundColor = 'transparent';
-                                }
-                              }}
-                            >
-                              {sub.title}
-                            </div>
-                          );
-                        })}
-                      </div>
-                    )}
-                  </div>
-                );
-              })}
-            </nav>
+            {/* Bottom Telemetry Card */}
+            <div className="p-4 rounded-2xl bg-white/[0.02] border border-white/10 mt-6">
+              <div className="flex items-center gap-2 mb-2">
+                <ShieldCheck className="w-4 h-4 text-emerald-400" />
+                <span className="text-xs font-bold font-display text-white">Quantum SLA Active</span>
+              </div>
+              <p className="text-[11px] font-mono text-slate-400 leading-relaxed">
+                All candidates encrypted via SHA-256 Quantum Vault.
+              </p>
+            </div>
           </div>
         </aside>
 
         {/* MAIN OUTLET CONTAINER */}
-        <main style={{
-          flex: 1,
-          padding: '24px 30px',
-          boxSizing: 'border-box',
-          overflowY: 'auto',
-          minHeight: 'calc(100vh - 64px)',
-          display: 'flex',
-          flexDirection: 'column'
-        }}>
-          {/* Top Action Toolbar (Save, Fullscreen, Reload) */}
-          <div style={{
-            display: 'flex',
-            justifyContent: 'flex-end',
-            marginBottom: '16px'
-          }}>
-            <div style={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: '18px',
-              backgroundColor: '#ffffff',
-              padding: '6px 18px',
-              borderRadius: '12px',
-              border: '1px solid #e2e8f0',
-              boxShadow: '0 2px 8px rgba(0,0,0,0.03)'
-            }}>
+        <main className="flex-1 p-4 md:p-8 overflow-y-auto flex flex-col w-full max-w-7xl mx-auto">
+          {/* Action Toolbar */}
+          <div className="flex items-center justify-between mb-6">
+            <div className="flex items-center gap-2 text-xs font-mono text-slate-400">
+              <span className="hover:text-white cursor-pointer" onClick={() => navigate('/dashboard')}>Universe</span>
+              <span>/</span>
+              <span className="text-[#f97316] font-bold">HRMS Talent Horizon</span>
+            </div>
+
+            {/* Toolbar Buttons */}
+            <div className="flex items-center gap-2 p-1.5 rounded-2xl bg-[#0c1017]/80 border border-white/10 backdrop-blur-xl shadow-lg">
               {/* Save State Action */}
               <button
                 onClick={handleSaveState}
-                style={{
-                  background: 'none',
-                  border: 'none',
-                  display: 'flex',
-                  flexDirection: 'column',
-                  alignItems: 'center',
-                  gap: '2px',
-                  cursor: 'pointer',
-                  padding: '2px 4px'
-                }}
-                title="Save"
+                onMouseEnter={() => sound.playHover()}
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-purple-500/10 border border-purple-500/30 hover:bg-purple-500/20 text-purple-300 text-xs font-mono font-bold transition-all cursor-pointer"
+                title="Save State"
               >
-                <div style={{
-                  width: '24px',
-                  height: '24px',
-                  borderRadius: '6px',
-                  backgroundColor: '#f3e8ff',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  color: '#9333ea'
-                }}>
-                  <Save style={{ width: '13px', height: '13px' }} />
-                </div>
-                <span style={{ fontSize: '10.5px', fontWeight: '600', color: '#6b7280' }}>
-                  {isSavedNotice ? 'Saved!' : 'Save'}
-                </span>
+                <Save className="w-3.5 h-3.5 text-purple-400" />
+                <span>{isSavedNotice ? 'Saved!' : 'Save'}</span>
               </button>
 
               {/* Fullscreen Action */}
               <button
                 onClick={handleFullscreenToggle}
-                style={{
-                  background: 'none',
-                  border: 'none',
-                  display: 'flex',
-                  flexDirection: 'column',
-                  alignItems: 'center',
-                  gap: '2px',
-                  cursor: 'pointer',
-                  padding: '2px 4px'
-                }}
-                title="Fullscreen"
+                onMouseEnter={() => sound.playHover()}
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-emerald-500/10 border border-emerald-500/30 hover:bg-emerald-500/20 text-emerald-300 text-xs font-mono font-bold transition-all cursor-pointer"
+                title="Toggle Fullscreen"
               >
-                <div style={{
-                  width: '24px',
-                  height: '24px',
-                  borderRadius: '6px',
-                  backgroundColor: '#ecfdf5',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  color: '#10b981'
-                }}>
-                  <Maximize style={{ width: '13px', height: '13px' }} />
-                </div>
-                <span style={{ fontSize: '10.5px', fontWeight: '600', color: '#6b7280' }}>
-                  {isFullscreen ? 'Exit' : 'Fullscreen'}
-                </span>
+                <Maximize className="w-3.5 h-3.5 text-emerald-400" />
+                <span>Fullscreen</span>
               </button>
 
               {/* Reload Action */}
               <button
                 onClick={handleReload}
-                style={{
-                  background: 'none',
-                  border: 'none',
-                  display: 'flex',
-                  flexDirection: 'column',
-                  alignItems: 'center',
-                  gap: '2px',
-                  cursor: 'pointer',
-                  padding: '2px 4px'
-                }}
-                title="Reload"
+                onMouseEnter={() => sound.playHover()}
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-sky-500/10 border border-sky-500/30 hover:bg-sky-500/20 text-sky-300 text-xs font-mono font-bold transition-all cursor-pointer"
+                title="Reload Route"
               >
-                <div style={{
-                  width: '24px',
-                  height: '24px',
-                  borderRadius: '6px',
-                  backgroundColor: '#e0f2fe',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  color: '#0284c7'
-                }}>
-                  <RefreshCw style={{ width: '13px', height: '13px' }} />
-                </div>
-                <span style={{ fontSize: '10.5px', fontWeight: '600', color: '#6b7280' }}>
-                  Reload
-                </span>
+                <RefreshCw className="w-3.5 h-3.5 text-sky-400" />
+                <span>Reload</span>
               </button>
             </div>
           </div>
 
-          {/* Blank Page Content Area */}
+          {/* Child Route Outlet Component */}
           <Outlet />
         </main>
       </div>

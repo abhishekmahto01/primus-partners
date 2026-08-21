@@ -1,12 +1,30 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ShieldCheck, ArrowLeft, RotateCcw, Loader2, ArrowRight } from 'lucide-react';
+import { motion } from 'framer-motion';
+import {
+  ShieldCheck,
+  ArrowLeft,
+  RotateCcw,
+  ArrowRight,
+  Sparkles,
+  Key,
+  Lock,
+  Zap,
+  Radio,
+  Cpu,
+  CheckCircle2,
+  AlertCircle
+} from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
+import { CosmicParticleCanvas } from '../components/common/CosmicParticleCanvas';
+import { WarpPortalOverlay } from '../components/common/WarpPortalOverlay';
+import { sound } from '../utils/soundEffects';
 
 export const OtpVerification = () => {
   const [otp, setOtp] = useState(['', '', '', '', '', '']);
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+  const [isWarping, setIsWarping] = useState(false);
   const [resendTimer, setResendTimer] = useState(30);
   const [canResend, setCanResend] = useState(false);
 
@@ -14,7 +32,6 @@ export const OtpVerification = () => {
   const { verifyOtp, logout } = useAuth();
   const navigate = useNavigate();
 
-  // Focus first input on mount & start countdown timer
   useEffect(() => {
     if (inputRefs.current[0]) {
       inputRefs.current[0].focus();
@@ -36,6 +53,7 @@ export const OtpVerification = () => {
   const handleChange = (index, value) => {
     if (value && !/^\d+$/.test(value)) return;
 
+    sound.playClick();
     const newOtp = [...otp];
     newOtp[index] = value.slice(-1);
     setOtp(newOtp);
@@ -48,6 +66,7 @@ export const OtpVerification = () => {
 
   const handleKeyDown = (index, e) => {
     if (e.key === 'Backspace' && !otp[index] && index > 0) {
+      sound.playClick();
       inputRefs.current[index - 1]?.focus();
     }
   };
@@ -56,11 +75,20 @@ export const OtpVerification = () => {
     e.preventDefault();
     const pastedData = e.clipboardData.getData('text').trim();
     if (/^\d{6}$/.test(pastedData)) {
+      sound.playScan();
       const newOtp = pastedData.split('');
       setOtp(newOtp);
       setError('');
       inputRefs.current[5]?.focus();
     }
+  };
+
+  const handleQuickFillDemo = () => {
+    sound.playScan();
+    const demoCode = ['1', '2', '3', '4', '5', '6'];
+    setOtp(demoCode);
+    setError('');
+    inputRefs.current[5]?.focus();
   };
 
   const handleSubmit = (e) => {
@@ -69,10 +97,11 @@ export const OtpVerification = () => {
 
     const fullOtp = otp.join('');
     if (fullOtp.length < 6) {
-      setError('Please enter all 6 digits of the OTP.');
+      setError('Please enter all 6 digits of the Quantum 2FA Key.');
       return;
     }
 
+    sound.playClick();
     setLoading(true);
 
     setTimeout(() => {
@@ -80,9 +109,13 @@ export const OtpVerification = () => {
       setLoading(false);
 
       if (result.success) {
-        navigate('/dashboard', { replace: true });
+        sound.playSuccess();
+        setIsWarping(true);
+        setTimeout(() => {
+          navigate('/dashboard', { replace: true });
+        }, 1400);
       } else {
-        setError(result.message || 'Wrong OTP. Please try again.');
+        setError(result.message || 'Quantum signature mismatch. Key expired or invalid.');
         setOtp(['', '', '', '', '', '']);
         inputRefs.current[0]?.focus();
       }
@@ -91,6 +124,7 @@ export const OtpVerification = () => {
 
   const handleResend = () => {
     if (!canResend) return;
+    sound.playClick();
     setOtp(['', '', '', '', '', '']);
     setError('');
     setResendTimer(30);
@@ -99,138 +133,90 @@ export const OtpVerification = () => {
   };
 
   return (
-    <div style={{
-      minHeight: '100vh',
-      width: '100vw',
-      backgroundColor: '#14100E',
-      display: 'flex',
-      alignItems: 'center',
-      justifyContent: 'center',
-      padding: '24px',
-      boxSizing: 'border-box',
-      fontFamily: 'system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
-      position: 'relative',
-      overflow: 'hidden'
-    }}>
-      {/* Background Glow */}
-      <div style={{
-        position: 'absolute',
-        top: '-10%',
-        left: '-10%',
-        width: '400px',
-        height: '400px',
-        backgroundColor: '#8C4A32',
-        borderRadius: '50%',
-        filter: 'blur(140px)',
-        opacity: 0.2,
-        pointerEvents: 'none'
-      }} />
+    <div className="relative min-h-screen w-full bg-[#080a0f] text-slate-100 flex flex-col items-center justify-center p-4 md:p-8 overflow-hidden font-sans select-none">
+      {/* 60FPS Cosmic Background */}
+      <CosmicParticleCanvas density={75} accentColor="#8C4A32" secondaryColor="#38bdf8" />
 
-      {/* Main Card */}
-      <div style={{
-        maxWidth: '460px',
-        width: '100%',
-        backgroundColor: '#ffffff',
-        borderRadius: '24px',
-        boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.5)',
-        padding: '36px',
-        boxSizing: 'border-box',
-        position: 'relative',
-        zIndex: 10
-      }}>
+      {/* Fullscreen Warp Speed Portal to Dashboard */}
+      <WarpPortalOverlay
+        isWarping={isWarping}
+        title="ACCESS GRANTED • WARPING TO UNIVERSE"
+        subtitle="Unlocking Quantum Command Matrix • Personnel Clearance Confirmed"
+      />
+
+      {/* Main 2FA Card */}
+      <motion.div
+        initial={{ opacity: 0, scale: 0.92, y: 20 }}
+        animate={{ opacity: 1, scale: 1, y: 0 }}
+        transition={{ duration: 0.3 }}
+        className="relative z-20 w-full max-w-lg bg-[#0f1420]/85 backdrop-blur-2xl rounded-3xl border border-white/10 shadow-[0_25px_80px_rgba(0,0,0,0.8),0_0_40px_rgba(140,74,50,0.25)] p-8 md:p-10 overflow-hidden"
+      >
+        {/* Ambient Top Glow Line */}
+        <div className="absolute top-0 left-0 right-0 h-[2px] bg-gradient-to-r from-transparent via-[#8C4A32] via-[#f97316] to-transparent animate-pulse" />
+
         {/* Header Bar */}
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '24px' }}>
+        <div className="flex items-center justify-between mb-8">
           <button
-            onClick={logout}
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: '6px',
-              fontSize: '12px',
-              fontWeight: '600',
-              color: '#6b7280',
-              background: 'none',
-              border: 'none',
-              cursor: 'pointer',
-              padding: 0
-            }}
+            onClick={() => { sound.playClick(); logout(); }}
+            className="flex items-center gap-2 text-xs font-mono font-bold text-slate-400 hover:text-white transition-colors cursor-pointer group"
           >
-            <ArrowLeft style={{ width: '16px', height: '16px' }} />
-            Back to Login
+            <ArrowLeft className="w-4 h-4 group-hover:-translate-x-1 transition-transform text-[#f97316]" />
+            Abort & Return
           </button>
-          <span style={{
-            fontSize: '10px',
-            fontWeight: '700',
-            color: '#8C4A32',
-            backgroundColor: 'rgba(140, 74, 50, 0.1)',
-            padding: '4px 10px',
-            borderRadius: '20px',
-            textTransform: 'uppercase',
-            letterSpacing: '0.5px'
-          }}>
-            Step 2 of 2
+          <span className="text-[10px] font-mono font-bold uppercase bg-[#8C4A32]/25 text-[#f97316] border border-[#8C4A32]/50 px-3 py-1 rounded-full shadow-inner">
+            Quantum Gate 2 of 2
           </span>
         </div>
 
-        {/* Title & Icon */}
-        <div style={{ textAlign: 'center', marginBottom: '28px' }}>
-          <div style={{
-            width: '56px',
-            height: '56px',
-            backgroundColor: 'rgba(140, 74, 50, 0.08)',
-            border: '1px solid rgba(140, 74, 50, 0.15)',
-            borderRadius: '16px',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            margin: '0 auto 16px auto',
-            color: '#8C4A32'
-          }}>
-            <ShieldCheck style={{ width: '28px', height: '28px' }} />
+        {/* Center Quantum Security Ring & Glyph */}
+        <div className="text-center mb-8 relative">
+          <div className="relative w-20 h-20 mx-auto mb-4 flex items-center justify-center">
+            {/* Spinning Neon Ring */}
+            <div className="absolute inset-0 rounded-full border-2 border-dashed border-[#8C4A32]/60 animate-spin" style={{ animationDuration: '10s' }} />
+            <div className="absolute -inset-1 rounded-full border border-[#f97316]/30 animate-pulse" />
+            <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-[#8C4A32] to-[#b45309] flex items-center justify-center text-white shadow-[0_0_25px_rgba(140,74,50,0.6)]">
+              <ShieldCheck className="w-8 h-8 text-white" />
+            </div>
           </div>
-          <h2 style={{ fontSize: '22px', fontWeight: '700', color: '#1f2937', margin: '0 0 6px 0' }}>
-            Two-Factor Authentication
+
+          <h2 className="text-2xl md:text-3xl font-black font-display text-white mb-2">
+            Quantum 2FA Gateway
           </h2>
-          <p style={{ fontSize: '13px', color: '#6b7280', margin: 0, lineHeight: '1.4' }}>
-            Enter the 6-digit verification code sent to your registered contact.
+          <p className="text-xs font-mono text-slate-400 max-w-sm mx-auto">
+            Input the 6-digit dynamic cryptographic key generated for your security profile.
           </p>
-          <div style={{
-            display: 'inline-block',
-            fontSize: '12px',
-            fontWeight: '600',
-            color: '#8C4A32',
-            backgroundColor: '#fffbeb',
-            border: '1px solid #fef3c7',
-            padding: '4px 12px',
-            borderRadius: '8px',
-            marginTop: '12px'
-          }}>
-            Static OTP for Demo: 123456
+
+          {/* Quick Demo Bypass Chip */}
+          <div className="mt-4 flex items-center justify-center gap-2">
+            <button
+              type="button"
+              onClick={handleQuickFillDemo}
+              onMouseEnter={() => sound.playHover()}
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-amber-500/10 border border-amber-500/30 text-amber-300 text-xs font-mono font-bold hover:bg-amber-500/20 transition-all cursor-pointer shadow-sm"
+            >
+              <Zap className="w-3.5 h-3.5 text-amber-400 animate-bounce" />
+              Auto-Fill Demo Code (123456)
+            </button>
           </div>
         </div>
 
-        {/* Error Banner */}
+        {/* Error Notification */}
         {error && (
-          <div style={{
-            backgroundColor: '#fef2f2',
-            border: '1px solid #fecaca',
-            color: '#dc2626',
-            fontSize: '13px',
-            fontWeight: '500',
-            padding: '12px 14px',
-            borderRadius: '12px',
-            marginBottom: '20px',
-            textAlign: 'center'
-          }}>
+          <motion.div
+            initial={{ opacity: 0, y: -10 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="p-3 rounded-xl bg-rose-950/50 border border-rose-500/40 text-rose-300 text-xs font-mono mb-6 flex items-center gap-2.5"
+          >
+            <AlertCircle className="w-4 h-4 text-rose-400 shrink-0" />
             {error}
-          </div>
+          </motion.div>
         )}
 
-        {/* OTP Input Form */}
+        {/* 6-Digit Matrix Input Grid */}
         <form onSubmit={handleSubmit}>
-          <div 
-            onPaste={handlePaste} 
-            style={{ display: 'flex', justifyContent: 'space-between', gap: '8px', marginBottom: '24px' }}
+          <div
+            onPaste={handlePaste}
+            className="grid grid-cols-6 gap-2.5 sm:gap-3.5 mb-8"
           >
             {otp.map((digit, index) => (
               <input
@@ -242,77 +228,52 @@ export const OtpVerification = () => {
                 value={digit}
                 onChange={(e) => handleChange(index, e.target.value)}
                 onKeyDown={(e) => handleKeyDown(index, e)}
-                style={{
-                  width: '46px',
-                  height: '54px',
-                  textAlign: 'center',
-                  fontSize: '20px',
-                  fontWeight: '700',
-                  borderRadius: '12px',
-                  border: digit ? '2px solid #8C4A32' : '1px solid #d1d5db',
-                  backgroundColor: digit ? 'rgba(140, 74, 50, 0.04)' : '#f9fafb',
-                  color: '#1f2937',
-                  outline: 'none',
-                  boxSizing: 'border-box'
-                }}
+                className={`w-full h-14 sm:h-16 text-center text-xl sm:text-2xl font-mono font-extrabold rounded-2xl outline-none transition-all ${
+                  digit
+                    ? 'bg-[#8C4A32]/25 border-2 border-[#f97316] text-white shadow-[0_0_15px_rgba(249,115,22,0.4)]'
+                    : 'bg-[#080a0f] border border-white/15 focus:border-[#f97316] text-white'
+                }`}
               />
             ))}
           </div>
 
-          {/* Submit Button */}
+          {/* Submit Action Button */}
           <button
             type="submit"
-            disabled={loading}
-            style={{
-              width: '100%',
-              padding: '14px',
-              backgroundColor: '#8C4A32',
-              color: '#ffffff',
-              border: 'none',
-              borderRadius: '12px',
-              fontSize: '14px',
-              fontWeight: '600',
-              cursor: 'pointer',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              gap: '8px',
-              boxShadow: '0 4px 12px rgba(140, 74, 50, 0.25)',
-              opacity: loading ? 0.7 : 1
-            }}
+            disabled={loading || isWarping}
+            onMouseEnter={() => sound.playHover()}
+            className="w-full py-4 px-6 rounded-2xl bg-gradient-to-r from-[#8C4A32] via-[#b45309] to-[#f97316] hover:from-[#9d5339] hover:to-[#ea580c] text-white font-display font-bold text-sm tracking-wide flex items-center justify-center gap-2.5 shadow-[0_4px_25px_rgba(140,74,50,0.5)] hover:shadow-[0_4px_35px_rgba(249,115,22,0.7)] transition-all cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed group"
           >
-            {loading ? 'Verifying OTP...' : 'Verify & Continue'}
-            {!loading && <ArrowRight style={{ width: '16px', height: '16px' }} />}
+            {loading ? (
+              <span>Validating 2FA Matrix...</span>
+            ) : isWarping ? (
+              <span>Unlocking Universe...</span>
+            ) : (
+              <>
+                <span>Verify & Enter Universe</span>
+                <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
+              </>
+            )}
           </button>
         </form>
 
-        {/* Resend Footer */}
-        <div style={{ marginTop: '24px', textAlign: 'center', fontSize: '13px', color: '#6b7280' }}>
-          Didn't receive the code?{' '}
+        {/* Resend Code Section */}
+        <div className="mt-6 text-center text-xs font-mono text-slate-400">
+          Didn't receive the quantum token?{' '}
           {canResend ? (
             <button
               onClick={handleResend}
-              style={{
-                fontWeight: '700',
-                color: '#8C4A32',
-                background: 'none',
-                border: 'none',
-                cursor: 'pointer',
-                padding: 0,
-                display: 'inline-flex',
-                alignItems: 'center',
-                gap: '4px'
-              }}
+              className="font-bold text-[#f97316] hover:underline inline-flex items-center gap-1 cursor-pointer"
             >
-              <RotateCcw style={{ width: '12px', height: '12px' }} /> Resend OTP
+              <RotateCcw className="w-3.5 h-3.5" /> Re-transmit Code
             </button>
           ) : (
-            <span style={{ fontWeight: '600', color: '#9ca3af' }}>
-              Resend in {resendTimer}s
+            <span className="text-slate-500 font-semibold">
+              Re-transmit available in {resendTimer}s
             </span>
           )}
         </div>
-      </div>
+      </motion.div>
     </div>
   );
 };
