@@ -1,11 +1,14 @@
 @import "tailwindcss";
 
 :root {
-  --primary-terracotta: #8C4A32;
-  --primary-terracotta-glow: rgba(140, 74, 50, 0.4);
-  --primary-cyan: #38bdf8;
-  --primary-cyan-glow: rgba(56, 189, 248, 0.4);
-  --primary-purple: #a855f7;
+  --primary-theme: #8C4A32;
+  --primary-rgb: 140, 74, 50;
+  --primary-accent: #f97316;
+  --primary-glow: rgba(140, 74, 50, 0.45);
+  --primary-subtle: rgba(140, 74, 50, 0.12);
+  --primary-border: rgba(140, 74, 50, 0.35);
+  --primary-hover: rgba(140, 74, 50, 0.85);
+
   --space-dark: #080a0f;
   --space-card: rgba(16, 20, 29, 0.75);
   --space-border: rgba(255, 255, 255, 0.08);
@@ -34,7 +37,7 @@ html, body, #root {
   overflow-x: hidden;
 }
 
-/* Custom Cosmic Scrollbar */
+/* Custom Cosmic Dynamic Scrollbar */
 ::-webkit-scrollbar {
   width: 6px;
   height: 6px;
@@ -45,12 +48,12 @@ html, body, #root {
 }
 
 ::-webkit-scrollbar-thumb {
-  background: rgba(140, 74, 50, 0.4);
+  background: var(--primary-border);
   border-radius: 4px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: rgba(140, 74, 50, 0.8);
+  background: var(--primary-theme);
 }
 
 /* Glassmorphic Cyber Surfaces */
@@ -66,8 +69,8 @@ html, body, #root {
   background: rgba(18, 24, 38, 0.75);
   backdrop-filter: blur(24px);
   -webkit-backdrop-filter: blur(24px);
-  border: 1px solid rgba(140, 74, 50, 0.3);
-  box-shadow: 0 0 30px rgba(140, 74, 50, 0.15), inset 0 1px 0 rgba(255, 255, 255, 0.1);
+  border: 1px solid var(--primary-border);
+  box-shadow: 0 0 30px var(--primary-glow), inset 0 1px 0 rgba(255, 255, 255, 0.1);
 }
 
 .glass-card {
@@ -80,8 +83,8 @@ html, body, #root {
 
 .glass-card:hover {
   background: rgba(24, 30, 46, 0.8);
-  border-color: rgba(140, 74, 50, 0.4);
-  box-shadow: 0 12px 30px -8px rgba(140, 74, 50, 0.25), 0 0 20px rgba(140, 74, 50, 0.1);
+  border-color: var(--primary-border);
+  box-shadow: 0 12px 30px -8px var(--primary-glow), 0 0 20px var(--primary-subtle);
 }
 
 /* Cyber Scanning Line Animation */
@@ -114,7 +117,7 @@ html, body, #root {
   animation: cyberFloat 5s ease-in-out infinite;
 }
 
-/* Laser Border Glow */
+/* Dynamic Laser Border Glow */
 .laser-border {
   position: relative;
 }
@@ -125,21 +128,30 @@ html, body, #root {
   inset: -1px;
   border-radius: inherit;
   padding: 1px;
-  background: linear-gradient(135deg, rgba(140, 74, 50, 0.8), rgba(56, 189, 248, 0.4), rgba(168, 85, 247, 0.2));
+  background: linear-gradient(135deg, var(--primary-theme), var(--primary-accent), rgba(168, 85, 247, 0.2));
   -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
   -webkit-mask-composite: xor;
   mask-composite: exclude;
   pointer-events: none;
 }
 
-/* Shimmer Effect */
-@keyframes shimmer {
-  0% { background-position: -200% 0; }
-  100% { background-position: 200% 0; }
+/* Dynamic Theme Helper Classes */
+.bg-theme {
+  background-color: var(--primary-theme);
 }
 
-.animate-shimmer {
-  background: linear-gradient(90deg, rgba(255,255,255,0) 0%, rgba(255,255,255,0.08) 50%, rgba(255,255,255,0) 100%);
-  background-size: 200% 100%;
-  animation: shimmer 3s infinite;
+.text-theme {
+  color: var(--primary-theme);
+}
+
+.border-theme {
+  border-color: var(--primary-theme);
+}
+
+.glow-theme {
+  box-shadow: 0 0 25px var(--primary-glow);
+}
+
+.gradient-theme {
+  background: linear-gradient(135deg, var(--primary-theme), var(--primary-accent));
 }

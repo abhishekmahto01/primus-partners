@@ -6,8 +6,6 @@ import {
   Command,
   UserCheck,
   LayoutDashboard,
-  ShieldCheck,
-  Cpu,
   Boxes,
   FileCheck,
   Laptop,
@@ -17,13 +15,16 @@ import {
   Maximize,
   Sparkles,
   ArrowRight,
+  Palette,
   X
 } from 'lucide-react';
+import { useTheme } from '../../context/ThemeContext';
 import { sound } from '../../utils/soundEffects';
 
 export const CommandPaletteModal = ({ isOpen, onClose }) => {
   const [query, setQuery] = useState('');
   const [isMuted, setIsMuted] = useState(sound.isMuted());
+  const { setPresetTheme, themePresets, themeName } = useTheme();
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -91,11 +92,20 @@ export const CommandPaletteModal = ({ isOpen, onClose }) => {
       icon: CheckSquare,
       action: () => navigate('/hrms/module/induction-checklist')
     },
+    // Dynamic Theme Presets in Command Palette
+    ...themePresets.map((preset) => ({
+      id: `theme-${preset.id}`,
+      category: 'Global Theme Studio',
+      title: `Switch Theme to ${preset.name}`,
+      desc: `Primary hex: ${preset.primary} • ${preset.sub}`,
+      icon: Palette,
+      action: () => setPresetTheme(preset.id)
+    })),
     {
       id: 'sound',
       category: 'Universe Settings',
-      title: isMuted ? 'Unmute Cyber Sound Synthesizer' : 'Mute Cyber Audio',
-      desc: 'Toggle synthesized Web Audio feedback',
+      title: isMuted ? 'Unmute Cyber Audio' : 'Mute Cyber Audio',
+      desc: 'Toggle Web Audio synthesizer feedback',
       icon: isMuted ? VolumeX : Volume2,
       action: () => {
         const nextMuted = sound.toggleMute();
@@ -151,15 +161,16 @@ export const CommandPaletteModal = ({ isOpen, onClose }) => {
           animate={{ opacity: 1, scale: 1, y: 0 }}
           exit={{ opacity: 0, scale: 0.95, y: -20 }}
           transition={{ duration: 0.2, ease: 'easeOut' }}
-          className="relative w-full max-w-2xl bg-[#0f1420]/95 border border-[#8C4A32]/40 rounded-2xl shadow-[0_25px_70px_rgba(0,0,0,0.8),0_0_30px_rgba(140,74,50,0.25)] overflow-hidden backdrop-blur-2xl z-10"
+          style={{ borderColor: 'var(--primary-border)' }}
+          className="relative w-full max-w-2xl bg-[#0f1420]/95 border rounded-2xl shadow-[0_25px_70px_rgba(0,0,0,0.8),0_0_30px_rgba(140,74,50,0.25)] overflow-hidden backdrop-blur-2xl z-10"
         >
           {/* Header Search Input */}
           <div className="flex items-center px-4 py-3.5 border-b border-white/10 gap-3">
-            <Search className="w-5 h-5 text-[#8C4A32]" />
+            <Search className="w-5 h-5" style={{ color: 'var(--primary-accent)' }} />
             <input
               type="text"
               autoFocus
-              placeholder="Type a command, module name, or candidate..."
+              placeholder="Type a command, theme name, module, or action..."
               value={query}
               onChange={(e) => setQuery(e.target.value)}
               className="flex-1 bg-transparent border-none outline-none text-white text-base placeholder-slate-500 font-sans"
@@ -189,10 +200,10 @@ export const CommandPaletteModal = ({ isOpen, onClose }) => {
                     key={item.id}
                     onClick={() => handleSelect(item)}
                     onMouseEnter={() => sound.playHover()}
-                    className="flex items-center justify-between p-3 rounded-xl hover:bg-[#8C4A32]/15 border border-transparent hover:border-[#8C4A32]/30 cursor-pointer transition-all group"
+                    className="flex items-center justify-between p-3 rounded-xl hover:bg-white/5 border border-transparent hover:border-white/10 cursor-pointer transition-all group"
                   >
                     <div className="flex items-center gap-3.5">
-                      <div className="w-9 h-9 rounded-lg bg-white/5 group-hover:bg-[#8C4A32]/25 border border-white/10 group-hover:border-[#8C4A32]/50 flex items-center justify-center text-slate-300 group-hover:text-[#f97316] transition-colors">
+                      <div className="w-9 h-9 rounded-lg bg-white/5 group-hover:bg-white/10 border border-white/10 flex items-center justify-center text-slate-300 group-hover:text-white transition-colors">
                         <Icon className="w-4.5 h-4.5" />
                       </div>
                       <div>
@@ -209,7 +220,7 @@ export const CommandPaletteModal = ({ isOpen, onClose }) => {
                         </p>
                       </div>
                     </div>
-                    <ArrowRight className="w-4 h-4 text-slate-500 group-hover:text-[#f97316] group-hover:translate-x-0.5 transition-all opacity-0 group-hover:opacity-100" />
+                    <ArrowRight className="w-4 h-4 text-slate-500 group-hover:text-white group-hover:translate-x-0.5 transition-all opacity-0 group-hover:opacity-100" />
                   </div>
                 );
               })
@@ -223,8 +234,8 @@ export const CommandPaletteModal = ({ isOpen, onClose }) => {
               <span><strong className="text-slate-200">↵</strong> Execute</span>
               <span><strong className="text-slate-200">ESC</strong> Close</span>
             </div>
-            <div className="flex items-center gap-1.5 text-[#f97316]">
-              <Sparkles className="w-3 h-3" /> ERA Omnibar v4.0
+            <div className="flex items-center gap-1.5" style={{ color: 'var(--primary-accent)' }}>
+              <Sparkles className="w-3 h-3" /> Theme: {themeName}
             </div>
           </div>
         </motion.div>

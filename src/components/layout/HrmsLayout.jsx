@@ -15,17 +15,10 @@ import {
   RefreshCw,
   Clock,
   Sparkles,
-  Command,
-  Volume2,
-  VolumeX,
-  Layers,
-  FileCheck,
-  Laptop,
-  CheckSquare,
-  ShieldCheck,
-  Plus
+  ShieldCheck
 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
+import { useTheme } from '../../context/ThemeContext';
 import { CommandPaletteModal } from '../common/CommandPaletteModal';
 import { sound } from '../../utils/soundEffects';
 
@@ -49,6 +42,7 @@ export const HRMS_MENU_ITEMS = [
 
 export const HrmsLayout = () => {
   const { user, logout } = useAuth();
+  const { themeColor, themeAccent } = useTheme();
   const navigate = useNavigate();
   const location = useLocation();
 
@@ -60,7 +54,6 @@ export const HrmsLayout = () => {
   const [timeStr, setTimeStr] = useState('');
   const [isSavedNotice, setIsSavedNotice] = useState(false);
   const [isCommandOpen, setIsCommandOpen] = useState(false);
-  const [isMuted, setIsMuted] = useState(sound.isMuted());
 
   useEffect(() => {
     const handleResize = () => {
@@ -110,12 +103,6 @@ export const HrmsLayout = () => {
     navigate('/login');
   };
 
-  const toggleAudio = () => {
-    const muted = sound.toggleMute();
-    setIsMuted(muted);
-    if (!muted) sound.playClick();
-  };
-
   const handleFullscreenToggle = () => {
     sound.playClick();
     if (!document.fullscreenElement) {
@@ -163,12 +150,19 @@ export const HrmsLayout = () => {
 
           <div
             onClick={() => handleNavClick('/hrms/onboarding')}
-            className="flex items-center gap-2.5 px-3.5 py-1.5 rounded-xl bg-[#8C4A32]/20 border border-[#8C4A32]/50 hover:bg-[#8C4A32]/30 transition-all cursor-pointer shadow-sm group"
+            className="flex items-center gap-2.5 px-3.5 py-1.5 rounded-xl border transition-all cursor-pointer shadow-sm group"
+            style={{
+              backgroundColor: 'var(--primary-subtle)',
+              borderColor: 'var(--primary-border)'
+            }}
           >
-            <span className="font-display font-extrabold text-[#fed7aa] text-sm tracking-tight group-hover:text-white">
+            <span className="font-display font-extrabold text-white text-sm tracking-tight">
               PRIMUS PARTNERS
             </span>
-            <span className="text-[10px] font-mono font-bold bg-[#8C4A32] text-white px-2 py-0.5 rounded-md shadow">
+            <span
+              className="text-[10px] font-mono font-bold text-white px-2 py-0.5 rounded-md shadow"
+              style={{ backgroundColor: themeColor }}
+            >
               TALENT HORIZON
             </span>
           </div>
@@ -178,10 +172,10 @@ export const HrmsLayout = () => {
         <div className="hidden md:flex items-center">
           <button
             onClick={() => { sound.playClick(); setIsCommandOpen(true); }}
-            className="flex items-center gap-2.5 px-3.5 py-1.5 rounded-xl bg-white/5 border border-white/10 hover:border-[#f97316]/50 hover:bg-white/10 text-slate-300 text-xs font-mono transition-all cursor-pointer w-64 justify-between"
+            className="flex items-center gap-2.5 px-3.5 py-1.5 rounded-xl bg-white/5 border border-white/10 hover:border-white/30 hover:bg-white/10 text-slate-300 text-xs font-mono transition-all cursor-pointer w-64 justify-between"
           >
             <div className="flex items-center gap-2">
-              <Search className="w-3.5 h-3.5 text-[#f97316]" />
+              <Search className="w-3.5 h-3.5" style={{ color: 'var(--primary-accent)' }} />
               <span>Omnibar Search...</span>
             </div>
             <kbd className="px-1.5 py-0.5 bg-white/10 rounded border border-white/10 text-[10px] text-slate-400">
@@ -190,11 +184,11 @@ export const HrmsLayout = () => {
           </button>
         </div>
 
-        {/* Right: Actions, Clock, User & Navigation */}
+        {/* Right: Clock, User & Navigation */}
         <div className="flex items-center gap-2 sm:gap-3">
           {/* Live Clock */}
           <div className="hidden lg:flex items-center gap-1.5 px-3 py-1 rounded-xl bg-black/40 border border-white/10 text-xs font-mono text-slate-300">
-            <Clock className="w-3.5 h-3.5 text-[#f97316]" />
+            <Clock className="w-3.5 h-3.5" style={{ color: 'var(--primary-accent)' }} />
             <span>{timeStr || '12:00:00 AM'}</span>
           </div>
 
@@ -202,22 +196,12 @@ export const HrmsLayout = () => {
           <select
             value={selectedUnit}
             onChange={(e) => { sound.playClick(); setSelectedUnit(e.target.value); }}
-            className="bg-black/50 border border-white/15 text-xs font-mono text-[#fed7aa] font-bold py-1.5 px-2.5 rounded-xl outline-none cursor-pointer hover:border-[#f97316]"
+            className="bg-black/50 border border-white/15 text-xs font-mono text-[#fed7aa] font-bold py-1.5 px-2.5 rounded-xl outline-none cursor-pointer hover:border-white/40"
           >
             <option value="Universe Unit-01">Unit-01 (HQ)</option>
             <option value="Universe Unit-02">Unit-02 (APAC)</option>
             <option value="Universe Unit-03">Unit-03 (EMEA)</option>
           </select>
-
-          {/* Sound Synthesizer Toggle */}
-          <button
-            onClick={toggleAudio}
-            onMouseEnter={() => sound.playHover()}
-            className="p-2 rounded-xl bg-white/5 border border-white/10 hover:bg-white/10 text-slate-300 hover:text-white transition-all cursor-pointer"
-            title={isMuted ? 'Unmute Sound' : 'Mute Sound'}
-          >
-            {isMuted ? <VolumeX className="w-4 h-4 text-slate-400" /> : <Volume2 className="w-4 h-4 text-[#f97316]" />}
-          </button>
 
           {/* Return to Command Center Hub */}
           <button
@@ -226,13 +210,16 @@ export const HrmsLayout = () => {
             className="px-3 py-1.5 rounded-xl bg-white/5 border border-white/10 hover:bg-white/10 text-slate-300 hover:text-white text-xs font-mono font-bold flex items-center gap-1.5 transition-all cursor-pointer"
             title="Universe Command Center"
           >
-            <ArrowLeft className="w-3.5 h-3.5 text-[#f97316]" />
-            <span className="hidden sm:inline">Universe Hub</span>
+            <ArrowLeft className="w-3.5 h-3.5" style={{ color: 'var(--primary-accent)' }} />
+            <span className="hidden sm:inline">Hub</span>
           </button>
 
           {/* User Profile */}
           <div className="flex items-center gap-2 px-2.5 py-1 rounded-xl bg-white/5 border border-white/10">
-            <div className="w-6 h-6 rounded-lg bg-[#8C4A32] flex items-center justify-center text-xs font-bold text-white">
+            <div
+              className="w-6 h-6 rounded-lg flex items-center justify-center text-xs font-bold text-white shadow-sm"
+              style={{ backgroundColor: themeColor }}
+            >
               {user?.userId ? user.userId.charAt(0).toUpperCase() : 'A'}
             </div>
             <span className="text-xs font-bold text-white hidden xl:inline font-display">
@@ -272,21 +259,6 @@ export const HrmsLayout = () => {
         >
           <div className="w-72 p-4 h-full overflow-y-auto flex flex-col justify-between">
             <div>
-              {/* Sidebar Header on Mobile */}
-              {isMobile && (
-                <div className="flex items-center justify-between pb-3 mb-4 border-b border-white/10">
-                  <div className="text-sm font-bold font-display text-[#fed7aa] flex items-center gap-2">
-                    <Sparkles className="w-4 h-4 text-[#f97316]" /> HRMS Navigation
-                  </div>
-                  <button
-                    onClick={() => setSidebarOpen(false)}
-                    className="p-1 rounded-lg text-slate-400 hover:text-white"
-                  >
-                    <X className="w-5 h-5" />
-                  </button>
-                </div>
-              )}
-
               {/* Search Menu Input */}
               <div className="relative mb-5">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500" />
@@ -295,7 +267,7 @@ export const HrmsLayout = () => {
                   placeholder="Filter HRMS routes..."
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  className="w-full bg-[#080a0f] border border-white/10 focus:border-[#f97316] rounded-xl py-2 pl-9 pr-8 text-xs font-mono text-white placeholder-slate-500 outline-none transition-colors"
+                  className="w-full bg-[#080a0f] border border-white/10 focus:border-white/40 rounded-xl py-2 pl-9 pr-8 text-xs font-mono text-white placeholder-slate-500 outline-none transition-colors"
                 />
                 {searchQuery && (
                   <button
@@ -319,21 +291,34 @@ export const HrmsLayout = () => {
                       {/* Main Group Header */}
                       <div
                         onClick={() => toggleMenu(item.id)}
+                        style={
+                          isActive
+                            ? {
+                                backgroundColor: 'var(--primary-subtle)',
+                                borderColor: 'var(--primary-border)'
+                              }
+                            : {}
+                        }
                         className={`flex items-center justify-between p-3 rounded-2xl cursor-pointer transition-all ${
                           isActive
-                            ? 'bg-[#8C4A32]/25 border border-[#8C4A32]/50 text-white shadow-md'
+                            ? 'border text-white shadow-md'
                             : 'bg-white/[0.02] border border-transparent hover:bg-white/[0.05] text-slate-300'
                         }`}
                       >
                         <div className="flex items-center gap-3">
-                          <div className={`w-8 h-8 rounded-xl flex items-center justify-center ${isActive ? 'bg-[#8C4A32] text-white' : 'bg-white/5 text-slate-400'}`}>
+                          <div
+                            className={`w-8 h-8 rounded-xl flex items-center justify-center ${
+                              isActive ? 'text-white shadow' : 'bg-white/5 text-slate-400'
+                            }`}
+                            style={isActive ? { backgroundColor: themeColor } : {}}
+                          >
                             <Icon className="w-4 h-4" />
                           </div>
                           <div>
                             <span className="text-xs font-bold font-display block leading-tight">
                               {item.title}
                             </span>
-                            <span className="text-[10px] font-mono text-[#f97316]">
+                            <span className="text-[10px] font-mono" style={{ color: 'var(--primary-accent)' }}>
                               {item.badge}
                             </span>
                           </div>
@@ -356,14 +341,27 @@ export const HrmsLayout = () => {
                                 key={sub.id}
                                 onClick={() => handleNavClick(sub.path)}
                                 onMouseEnter={() => sound.playHover()}
+                                style={
+                                  isSubActive
+                                    ? {
+                                        backgroundColor: 'var(--primary-subtle)',
+                                        borderColor: 'var(--primary-border)'
+                                      }
+                                    : {}
+                                }
                                 className={`p-2 rounded-xl text-xs font-mono cursor-pointer transition-all flex items-center justify-between ${
                                   isSubActive
-                                    ? 'bg-[#8C4A32]/30 border border-[#f97316]/60 text-white font-bold shadow-sm'
+                                    ? 'border text-white font-bold shadow-sm'
                                     : 'text-slate-400 hover:text-white hover:bg-white/5'
                                 }`}
                               >
                                 <span>{sub.title}</span>
-                                {isSubActive && <span className="w-1.5 h-1.5 rounded-full bg-[#f97316] animate-pulse" />}
+                                {isSubActive && (
+                                  <span
+                                    className="w-1.5 h-1.5 rounded-full animate-pulse"
+                                    style={{ backgroundColor: themeAccent }}
+                                  />
+                                )}
                               </div>
                             );
                           })}
@@ -377,7 +375,7 @@ export const HrmsLayout = () => {
 
             {/* Bottom Telemetry Card */}
             <div className="p-4 rounded-2xl bg-white/[0.02] border border-white/10 mt-6">
-              <div className="flex items-center gap-2 mb-2">
+              <div className="flex items-center gap-2 mb-1.5">
                 <ShieldCheck className="w-4 h-4 text-emerald-400" />
                 <span className="text-xs font-bold font-display text-white">Quantum SLA Active</span>
               </div>
@@ -395,7 +393,7 @@ export const HrmsLayout = () => {
             <div className="flex items-center gap-2 text-xs font-mono text-slate-400">
               <span className="hover:text-white cursor-pointer" onClick={() => navigate('/dashboard')}>Universe</span>
               <span>/</span>
-              <span className="text-[#f97316] font-bold">HRMS Talent Horizon</span>
+              <span className="font-bold" style={{ color: 'var(--primary-accent)' }}>HRMS Talent Horizon</span>
             </div>
 
             {/* Toolbar Buttons */}
